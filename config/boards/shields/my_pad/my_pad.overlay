@@ -5,7 +5,6 @@
  */
 
 #include <dt-bindings/zmk/matrix_transform.h>
-/* 👇👇👇 新增了这一行，专门用来定义 LED 颜色的 👇👇👇 */
 #include <dt-bindings/led/led.h>
 
 / {
@@ -13,12 +12,12 @@
         zmk,kscan = &kscan0;
         zmk,matrix_transform = &default_transform;
         zmk,underglow = &led_strip;
+        /* 👇 1. 新增：告诉 ZMK 系统，zephyr,display (主屏幕) 就是 nice_view */
+        zephyr,display = &nice_view;
     };
 
     /* 
      * 矩阵变换 (Matrix Transform)
-     * 对应 "B. 矩阵逻辑表"
-     * 16个轴 + 2个旋钮按压 = 18个逻辑按键
      */
     default_transform: keymap_transform_0 {
         compatible = "zmk,matrix-transform";
@@ -26,18 +25,15 @@
         rows = <4>;
         
         map = <
-            RC(0,0) RC(0,1) RC(0,2) RC(0,3) RC(0,4)  /* Row 0: K1-K4 + Left Enc Press */
-            RC(1,0) RC(1,1) RC(1,2) RC(1,3) RC(1,4)  /* Row 1: K5-K8 + Right Enc Press */
-            RC(2,0) RC(2,1) RC(2,2) RC(2,3)          /* Row 2: K9-K12 */
-            RC(3,0) RC(3,1) RC(3,2) RC(3,3)          /* Row 3: K13-K16 */
+            RC(0,0) RC(0,1) RC(0,2) RC(0,3) RC(0,4)
+            RC(1,0) RC(1,1) RC(1,2) RC(1,3) RC(1,4)
+            RC(2,0) RC(2,1) RC(2,2) RC(2,3)
+            RC(3,0) RC(3,1) RC(3,2) RC(3,3)
         >;
     };
 
     /* 
      * 物理按键扫描 (Kscan)
-     * 对应 "A. 硬件连接圣经"
-     * 注意：Col 2 (P0.09) 和 Col 3 (P0.10) 是 NFC 引脚
-     * 必须在 my_pad.conf 中设置 CONFIG_NFCT_PINS_AS_GPIOS=y
      */
     kscan0: kscan_0 {
         compatible = "zmk,kscan-gpio-matrix";
@@ -45,25 +41,23 @@
         diode-direction = "col2row";
 
         row-gpios
-            = <&gpio0 22 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)> /* Row 0: D4 */
-            , <&gpio0 24 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)> /* Row 1: D5 */
-            , <&gpio1 0  (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)> /* Row 2: D6 */
-            , <&gpio0 11 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)> /* Row 3: D7 */
+            = <&gpio0 22 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&gpio0 24 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&gpio1 0  (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&gpio0 11 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
             ;
 
         col-gpios
-            = <&gpio1 4  GPIO_ACTIVE_HIGH> /* Col 0: D8 */
-            , <&gpio1 6  GPIO_ACTIVE_HIGH> /* Col 1: D9 */
-            , <&gpio0 9  GPIO_ACTIVE_HIGH> /* Col 2: D10 (NFC) */
-            , <&gpio0 10 GPIO_ACTIVE_HIGH> /* Col 3: D16 (NFC) */
-            , <&gpio0 2  GPIO_ACTIVE_HIGH> /* Col 4: A2 */
+            = <&gpio1 4  GPIO_ACTIVE_HIGH>
+            , <&gpio1 6  GPIO_ACTIVE_HIGH>
+            , <&gpio0 9  GPIO_ACTIVE_HIGH>
+            , <&gpio0 10 GPIO_ACTIVE_HIGH>
+            , <&gpio0 2  GPIO_ACTIVE_HIGH>
             ;
     };
 
     /* 
      * 旋钮 (Encoders)
-     * 左旋钮: P1.11, P1.13
-     * 右旋钮: P0.31, P0.03
      */
     left_encoder: encoder_left {
         compatible = "alps,ec11";
@@ -90,8 +84,6 @@
 
 /* 
  * RGB 灯带配置 (WS2812B)
- * 数据脚: P0.08 (D0)
- * 使用 SPI 驱动
  */
 &spi3 {
     compatible = "nordic,nrf-spim";
@@ -102,13 +94,9 @@
 
     led_strip: ws2812@0 {
         compatible = "worldsemi,ws2812-spi";
-
-        /* SPI / CS line */
         reg = <0>;
         spi-max-frequency = <4000000>;
-
-        /* WS2812 data line */
-        chain-length = <10>; /* 10颗灯 */
+        chain-length = <10>;
         spi-one-frame = <0x70>;
         spi-zero-frame = <0x40>;
         color-mapping = <LED_COLOR_ID_GREEN LED_COLOR_ID_RED LED_COLOR_ID_BLUE>;
@@ -118,7 +106,7 @@
 &pinctrl {
     spi3_default: spi3_default {
         group1 {
-            psels = <NRF_PSEL(SPIM_MOSI, 0, 8)>; /* P0.08 */
+            psels = <NRF_PSEL(SPIM_MOSI, 0, 8)>;
         };
     };
 
@@ -127,5 +115,13 @@
             psels = <NRF_PSEL(SPIM_MOSI, 0, 8)>;
             low-power-enable;
         };
+    };
+};
+
+/* 👇 2. 新增：启用 nice_view 适配器 👇 */
+/* 这段代码会调用 ZMK 内置的 nice_view 定义，并将其状态设为可用 */
+&nice_view_adapter {
+    nice_view: nice_view {
+        status = "okay";
     };
 };
