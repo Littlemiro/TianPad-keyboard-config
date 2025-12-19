@@ -1,4 +1,10 @@
-# config/build.yaml
-include:
-  - board: nice_nano_v2
-    shield: my_pad nice_view_adapter
+name: Build ZMK firmware
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  build:
+    uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@main
+    with:
+      # 在这里直接定义你的键盘和 shield 组合
+      # 注意：shield 名字中间用空格隔开
+      build_matrix: '{"include":[{"board":"nice_nano_v2","shield":"my_pad nice_view_adapter"}]}'
