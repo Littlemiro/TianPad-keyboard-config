@@ -12,8 +12,7 @@
         zmk,kscan = &kscan0;
         zmk,matrix_transform = &default_transform;
         zmk,underglow = &led_strip;
-        /* 👇 1. 新增：告诉 ZMK 系统，zephyr,display (主屏幕) 就是 nice_view */
-        zephyr,display = &nice_view;
+
     };
 
     /* 
@@ -115,13 +114,5 @@
             psels = <NRF_PSEL(SPIM_MOSI, 0, 8)>;
             low-power-enable;
         };
-    };
-};
-
-/* 👇 2. 新增：启用 nice_view 适配器 👇 */
-/* 这段代码会调用 ZMK 内置的 nice_view 定义，并将其状态设为可用 */
-&nice_view_adapter {
-    nice_view: nice_view {
-        status = "okay";
     };
 };
