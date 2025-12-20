@@ -85,3 +85,10 @@
         color-mapping = <LED_COLOR_ID_GREEN LED_COLOR_ID_RED LED_COLOR_ID_BLUE>;
     };
 };
+
+/* Nice!View Display Configuration */
+nice_view_display: nice_view {
+    compatible = "nice,nice_view";
+    status = "okay";
+    /* 如果需要额外配置，比如 SPI 或 I2C，根据 Nice!View 文档添加 */
+};
