@@ -1,17 +1,15 @@
 /*
  * Copyright (c) 2024 The ZMK Contributors
- *
  * SPDX-License-Identifier: MIT
+ *
+ * 这个文件定义【硬件配置】：GPIO引脚、按键矩阵、编码器、RGB灯
  */
 
 #include <dt-bindings/zmk/matrix_transform.h>
 #include <dt-bindings/led/led.h>
 
 / {
-    /* !!! FIX #1: Tell Zephyr which display device to use !!! */
     chosen {
-        /* This points to the display instance created by nice_view_adapter */
-        zephyr,display = &nice_view_display;
         zmk,kscan = &kscan0;
         zmk,matrix_transform = &default_transform;
         zmk,underglow = &led_strip;
@@ -59,26 +57,25 @@
     };
 
     /* 
-     * !!! FIX #2: Enable encoders (status = "okay") !!!
-     * 左旋钮: P1.11, P1.13
+     * 左旋钮编码器
      */
     left_encoder: encoder_left {
         compatible = "alps,ec11";
         a-gpios = <&gpio1 11 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
         b-gpios = <&gpio1 13 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
         steps = <80>;
-        status = "okay"; /* Was "disabled", causing Kconfig warnings */
+        status = "okay";
     };
 
     /* 
-     * 右旋钮: P0.31, P0.03
+     * 右旋钮编码器
      */
     right_encoder: encoder_right {
         compatible = "alps,ec11";
         a-gpios = <&gpio0 31 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
         b-gpios = <&gpio0 3 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
         steps = <80>;
-        status = "okay"; /* Was "disabled", causing Kconfig warnings */
+        status = "okay";
     };
 
     sensors: sensors {
@@ -90,6 +87,7 @@
 
 /* 
  * RGB 灯带配置 (WS2812B)
+ * 使用 SPI3 通过 P0.08 (D0) 输出数据
  */
 &spi3 {
     compatible = "nordic,nrf-spim";
@@ -123,3 +121,8 @@
         };
     };
 };
+
+/*
+ * 注意：Nice!View 显示屏的配置由 nice_view_adapter shield 自动处理
+ * 不需要在这里手动配置！
+ */
