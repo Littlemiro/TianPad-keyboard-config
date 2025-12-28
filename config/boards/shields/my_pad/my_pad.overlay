@@ -2,7 +2,9 @@
  * Copyright (c) 2024 The ZMK Contributors
  * SPDX-License-Identifier: MIT
  *
- * 这个文件定义【硬件配置】：GPIO引脚、按键矩阵、编码器、RGB灯
+ * 左手游戏小键盘 - 人体工学布局
+ * 17 个按键 + 2 个旋钮编码器
+ * 矩阵: 5 行 × 5 列
  */
 
 #include <dt-bindings/zmk/matrix_transform.h>
@@ -16,24 +18,56 @@
     };
 
     /* 
+     * ============================================================
      * 矩阵变换 (Matrix Transform)
-     * 16个轴 + 2个旋钮按压 = 18个逻辑位置
+     * ============================================================
+     * 物理布局 → 逻辑位置映射
+     * 
+     * 物理布局:
+     *        [1]  [2]  [3]  [4]     [旋钮2]
+     *      [Q]     [W]  [E]  [R]
+     *       [A]  [S]     [D]  [F]
+     * [旋钮1]    [Z]  [X]  [C]  [V]
+     *              [  Space  ]
      */
     default_transform: keymap_transform_0 {
         compatible = "zmk,matrix-transform";
         columns = <5>;
-        rows = <4>;
+        rows = <5>;
         
         map = <
+            /* Row 0: 数字行 + 旋钮2 */
             RC(0,0) RC(0,1) RC(0,2) RC(0,3) RC(0,4)
-            RC(1,0) RC(1,1) RC(1,2) RC(1,3) RC(1,4)
+            /* Row 1: QWER 行 */
+            RC(1,0) RC(1,1) RC(1,2) RC(1,3)
+            /* Row 2: ASDF 行 */
             RC(2,0) RC(2,1) RC(2,2) RC(2,3)
-            RC(3,0) RC(3,1) RC(3,2) RC(3,3)
+            /* Row 3: ZXCV 行 + 旋钮1 */
+            RC(3,0) RC(3,1) RC(3,2) RC(3,3) RC(3,4)
+            /* Row 4: 空格 */
+            RC(4,0)
         >;
     };
 
     /* 
+     * ============================================================
      * 物理按键扫描 (Kscan)
+     * ============================================================
+     * Nice!Nano v2 引脚分配:
+     * 
+     * 行 (Row) - 输出，active high:
+     *   Row0: P0.22 (D4)  - 数字行
+     *   Row1: P0.24 (D5)  - QWER 行  
+     *   Row2: P1.00 (D6)  - ASDF 行
+     *   Row3: P0.11 (D7)  - ZXCV 行
+     *   Row4: P1.04 (D8)  - 空格行 ← 新增！
+     *
+     * 列 (Col) - 输入，带下拉:
+     *   Col0: P1.06 (D9)
+     *   Col1: P0.09 (D10) - NFC 引脚，需要 CONFIG_NFCT_PINS_AS_GPIOS=y
+     *   Col2: P0.10 (D16) - NFC 引脚，需要 CONFIG_NFCT_PINS_AS_GPIOS=y
+     *   Col3: P0.02 (A2)
+     *   Col4: P0.29 (A3)  - 旋钮按压列
      */
     kscan0: kscan_0 {
         compatible = "zmk,kscan-gpio-matrix";
@@ -41,39 +75,42 @@
         diode-direction = "col2row";
 
         row-gpios
-            = <&gpio0 22 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
-            , <&gpio0 24 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
-            , <&gpio1 0  (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
-            , <&gpio0 11 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            = <&gpio0 22 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>  /* Row0: D4 */
+            , <&gpio0 24 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>  /* Row1: D5 */
+            , <&gpio1 0  (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>  /* Row2: D6 */
+            , <&gpio0 11 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>  /* Row3: D7 */
+            , <&gpio1 4  (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>  /* Row4: D8 ← 新增! */
             ;
 
         col-gpios
-            = <&gpio1 4  GPIO_ACTIVE_HIGH>
-            , <&gpio1 6  GPIO_ACTIVE_HIGH>
-            , <&gpio0 9  GPIO_ACTIVE_HIGH>
-            , <&gpio0 10 GPIO_ACTIVE_HIGH>
-            , <&gpio0 2  GPIO_ACTIVE_HIGH>
+            = <&gpio1 6  GPIO_ACTIVE_HIGH>   /* Col0: D9 */
+            , <&gpio0 9  GPIO_ACTIVE_HIGH>   /* Col1: D10 (P0.09 NFC) */
+            , <&gpio0 10 GPIO_ACTIVE_HIGH>   /* Col2: D16 (P0.10 NFC) */
+            , <&gpio0 2  GPIO_ACTIVE_HIGH>   /* Col3: A2 */
+            , <&gpio0 29 GPIO_ACTIVE_HIGH>   /* Col4: A3 (旋钮按压) */
             ;
     };
 
     /* 
-     * 左旋钮编码器
+     * ============================================================
+     * 旋钮编码器 (Rotary Encoders)
+     * ============================================================
      */
+    
+    /* 左旋钮 (旋钮1): 位于左下角 */
     left_encoder: encoder_left {
         compatible = "alps,ec11";
-        a-gpios = <&gpio1 11 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
-        b-gpios = <&gpio1 13 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+        a-gpios = <&gpio1 11 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;  /* P1.11 (D14) */
+        b-gpios = <&gpio1 13 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;  /* P1.13 (D15) */
         steps = <80>;
         status = "okay";
     };
 
-    /* 
-     * 右旋钮编码器
-     */
+    /* 右旋钮 (旋钮2): 位于右上角 */
     right_encoder: encoder_right {
         compatible = "alps,ec11";
-        a-gpios = <&gpio0 31 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
-        b-gpios = <&gpio0 3 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+        a-gpios = <&gpio0 31 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;  /* P0.31 (A0) */
+        b-gpios = <&gpio0 3  (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;  /* P0.03 (A1) */
         steps = <80>;
         status = "okay";
     };
@@ -86,7 +123,9 @@
 };
 
 /* 
+ * ============================================================
  * RGB 灯带配置 (WS2812B)
+ * ============================================================
  * 使用 SPI3 通过 P0.08 (D0) 输出数据
  */
 &spi3 {
@@ -110,7 +149,7 @@
 &pinctrl {
     spi3_default: spi3_default {
         group1 {
-            psels = <NRF_PSEL(SPIM_MOSI, 0, 8)>;
+            psels = <NRF_PSEL(SPIM_MOSI, 0, 8)>;  /* P0.08 = D0 */
         };
     };
 
@@ -124,5 +163,4 @@
 
 /*
  * 注意：Nice!View 显示屏的配置由 nice_view_adapter shield 自动处理
- * 不需要在这里手动配置！
  */
